@@ -1,6 +1,8 @@
 extern crate clap;
 use clap::{App, Arg, SubCommand};
 
+mod command;
+
 fn main() {
     App::new("fafnir")
         .version("0.1")
