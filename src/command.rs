@@ -1,49 +1,37 @@
 use clap::ArgMatches;
 use failure::Error;
+use std::path::Path;
+
+
+pub trait FaFnirCommand {
+    fn init(url: &String);
+    fn show();
+    fn add(file_path: Path, tags: &Vec<String>);
+    fn remove(file_path: Path);
+    fn config(url: &str, tags: &Vec<String>);
+    fn pull();
+    fn push();
+    fn link(file_path: &str, tags: &Vec<String>);
+}
 
 pub struct FaFnirCommandV1 {
     pub tags: Vec<String>,
-    pub add: add_command,
-    pub config: config_command,
-    pub pull: pull_command,
-    pub push: pull_command,
-    pub distribute: distribute_command,
+}
+
+impl FaFnirCommand for FaFnirCommandV1 {
 }
 
 
-pub trait add_command {
-    fn run();
-}
-
-pub trait config_command {
-    fn set();
-}
-
-pub trait pull_command {
-    fn run();
-}
-
-pub trait push_command {
-    fn run();
-}
-
-pub trait distribute_command {
-    fn run();
-}
-
-pub trait fafnir_command {
-    fn run_command(self, options: ArgMatches) -> Result<(), Error>;
-}
-
-impl fafnir_command for FaFnirCommandV1 {
-    fn run_command(self, options: ArgMatches) -> Result<(), Error> {
-        match options.subcommand_name() {
-            Some("add") => {},
-            Some("config") => {},
-            Some("pull") => {},
-            Some("push") => {},
-            Some("distribute") => {},
-            _ => {},
-        };
-    }
+fn run_command(self, options: ArgMatches) -> Result<(), Error> {
+    match options.subcommand_name() {
+        Some("add") => {},
+        Some("config") => {},
+        Some("pull") => {},
+        Some("push") => {},
+        Some("link") => {},
+        Some("show") => {},
+        Some("init") => {},
+        Some("remove") => {},
+        _ => {},
+    };
 }

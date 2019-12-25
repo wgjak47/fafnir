@@ -1,20 +1,34 @@
 extern crate clap;
 use clap::{App, Arg, SubCommand};
+use command::run_command;
+use std::process::exit;
 
 mod command;
 
 fn main() {
-    App::new("fafnir")
+   let options = App::new("fafnir")
         .version("0.1")
         .about("manage your dot/config files with git")
         .author("wgjak47")
         .subcommand(
             SubCommand::with_name("add")
                 .about("add a file to store")
-                .arg(Arg::with_name("filename").takes_value(true))
-                .arg(Arg::with_name("message").long("msg").takes_value(true))
-                .arg(Arg::with_name("git-tag").long("git-tag").takes_value(true))
-                .arg(Arg::with_name("tags").long("tags").takes_value(true)),
+                .arg(Arg::with_name("filepath").takes_value(true).help("the file path, will auto convert to the Absolute Path"))
+                .arg(Arg::with_name("tags").long("tags").takes_value(true).help("set custom tags for this file, default is the common setting")),
+        )
+        .subcommand(
+            SubCommand::with_name("remove")
+                .about("remove a config file and link, and restore the origin file")
+                .arg(Arg::with_name("filepath").takes_value(true).help("the file path, will auto convert to the Absolute Path"))
+        )
+        .subcommand(
+            SubCommand::with_name("show")
+                .about("show the stored config files")
+        )
+        .subcommand(
+            SubCommand::with_name("init")
+                .about("init git repo")
+                .arg(Arg::with_name("url").takes_value(true).help("the git repo remote url"))
         )
         .subcommand(
             SubCommand::with_name("config")
@@ -27,10 +41,18 @@ fn main() {
         .subcommand(SubCommand::with_name("pull").about("pull from the remote"))
         .subcommand(SubCommand::with_name("push").about("push local store to remote"))
         .subcommand(
-            SubCommand::with_name("distribute")
-                .about("distribute your config file")
+            SubCommand::with_name("link")
+                .about("create link your config file")
                 .arg(Arg::with_name("tags").long("tags").takes_value(true))
                 .arg(Arg::with_name("filename").long("filename").takes_value(true)),
         )
         .get_matches();
+
+    match run_command(options) {
+        Ok(()) => {},
+        Err(e) => {
+            eprint!(e);
+            exit(250);
+        }
+    }
 }
