@@ -1,4 +1,7 @@
 extern crate clap;
+extern crate shellexpand;
+#[macro_use] extern crate failure;
+
 use clap::{App, Arg, SubCommand};
 use command::run_command;
 use std::process::exit;
@@ -51,7 +54,7 @@ fn main() {
     match run_command(options) {
         Ok(()) => {},
         Err(e) => {
-            eprint!(e);
+            eprint!("{}", e);
             exit(250);
         }
     }
