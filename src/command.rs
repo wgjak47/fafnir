@@ -3,6 +3,7 @@ use failure::Error;
 use shellexpand::full as shell_expand;
 use std::path::Path;
 use std::path::PathBuf;
+use crate::store::Store;
 
 pub trait FaFnirCommand {
     fn init(&self, url: &String) -> Result<(), Error>;
@@ -66,10 +67,8 @@ fn get_file_path(raw_path: Option<&str>) -> Result<PathBuf, Error> {
     raw_path
         .ok_or(format_err!("invalid path!"))
         .and_then(|path: &str| -> Result<PathBuf, Error> {
-            match shell_expand(path) {
-                Ok(_path) => Ok(PathBuf::from(&_path.into_owned())),
-                Err(e) => Err(Error::from_boxed_compat(Box::new(e))),
-            }
+            let _path = shell_expand(path)?;
+            Ok(PathBuf::from(&_path.into_owned()))
         })
 }
 

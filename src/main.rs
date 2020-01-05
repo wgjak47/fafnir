@@ -1,5 +1,3 @@
-extern crate clap;
-extern crate shellexpand;
 #[macro_use] extern crate failure;
 
 use clap::{App, Arg, SubCommand};
@@ -7,6 +5,7 @@ use command::run_command;
 use std::process::exit;
 
 mod command;
+mod store;
 
 fn main() {
    let options = App::new("fafnir")
