@@ -3,7 +3,7 @@ use failure::Error;
 use shellexpand::full as shell_expand;
 use std::path::Path;
 use std::path::PathBuf;
-use crate::store::Store;
+use Storage::store::Storage;
 
 pub trait FaFnirCommand {
     fn init(&self, url: &String) -> Result<(), Error>;

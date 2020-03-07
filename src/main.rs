@@ -7,6 +7,7 @@ use std::process::exit;
 mod command;
 mod store;
 
+
 fn main() {
    let options = App::new("fafnir")
         .version("0.1")
