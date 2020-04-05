@@ -11,10 +11,13 @@ pub trait FileOperator {
     fn link(&self, source: &Path, target: &Path) -> Result<(), Error> {
         unimplemented!()
     }
+    fn rm(&self, source: &Path) -> Result<(), Error> {
+        unimplemented!()
+    }
 }
 
 // provider dot config storage and sync
-pub trait Storage {
+pub trait Storage: Sized {
     // add a file to storage
     fn add(&self, filepath: &Path, tags: &Vec<String>) -> Result<(), Error>;
     // remove a file from storage
@@ -22,22 +25,56 @@ pub trait Storage {
     // get default tags for distribute
     fn get_default_tags(&self) -> Result<&Vec<String>, Error>;
     // update tags config
-    fn set_tags(&self, tags: &Vec<String>) -> Result<(), Error>;
+    fn set_default_tags(&self, tags: &Vec<String>) -> Result<(), Error>;
     // pull from remote
     fn pull(&self) -> Result<(), Error>;
     // push to remote
     fn push(&self) -> Result<(), Error>;
+    // load or creat a storage
+    fn load_or_new(store_path: &Path) -> Result<Self, Error>;
 }
 
-pub struct GitStore {
-    repo: Repository,
+// record config UUID and
+pub trait StorageManager: Sized {
+    fn load() -> Result<Self, Error>;
+    fn add(&self, filepath: &Path, tags: &Vec<String>) -> Result<(), Error>;
+    fn remove(&self, filepath: &Path, tags: &Vec<String>) -> Result<(), Error>;
 }
 
-impl FileOperator for GitStore {}
+pub trait Test {
+    fn test(&self) {}
+}
 
-impl Storage for GitStore {
+pub struct Hehe {}
+
+impl Test for Hehe {}
+
+pub struct YamlStorageManager {
+    config_file_path: Box<Path>
+}
+
+impl StorageManager for YamlStorageManager {
+    fn load() -> Result<Self, Error> {
+        unimplemented!()
+    }
     fn add(&self, filepath: &Path, tags: &Vec<String>) -> Result<(), Error> {
-        let home = home_dir().ok_or(format_err!("failed to get home dir"))?;
+        unimplemented!()
+    }
+    fn remove(&self, filepath: &Path, tags: &Vec<String>) -> Result<(), Error> {
+        unimplemented!()
+    }
+}
+
+pub struct GitStore<T: StorageManager> {
+    repo: Repository,
+    manager: T,
+    manager2: Box<dyn Test>,
+}
+
+impl<T: StorageManager> FileOperator for GitStore<T> {}
+
+impl<T: StorageManager> Storage for GitStore<T> {
+    fn add(&self, filepath: &Path, tags: &Vec<String>) -> Result<(), Error> {
         let filename = filepath.file_name().ok_or(format_err!("invalid filepath"))?;
         let mut target = self.repo.path().parent().ok_or(format_err!("invalid repo path"))?.to_owned();
         target.push(filename);
@@ -54,7 +91,7 @@ impl Storage for GitStore {
         unimplemented!();
     }
 
-    fn set_tags(&self, tags: &Vec<String>) -> Result<(), Error> {
+    fn set_default_tags(&self, tags: &Vec<String>) -> Result<(), Error> {
         Ok(())
     }
 
@@ -65,20 +102,20 @@ impl Storage for GitStore {
     fn push(&self) -> Result<(), Error> {
         unimplemented!();
     }
-}
-
-impl GitStore {
-    pub fn load_or_new(store_path: &Path) -> Result<GitStore, Error> {
+    fn load_or_new(store_path: &Path) -> Result<GitStore<T>, Error> {
         let repo: Repository;
         if store_path.exists() {
-            let repo = Repository::open(store_path)?;
+            repo = Repository::open(store_path)?;
         } else {
-            let repo = Repository::init(store_path)?;
+            repo = Repository::init(store_path)?;
         }
         if repo.is_bare() {
             return Err(format_err!("invalid repo, should not be bare repo"));
         }
-        Ok(GitStore { repo: repo })
+
+        let manager = T::load()?;
+
+        Ok(GitStore::<T> { repo: repo, manager: manager })
     }
 }
 
