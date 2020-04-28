@@ -1,18 +1,31 @@
 use dirs::home_dir;
 use failure::Error;
-use git2::Repository;
+use git2::{Repository, Commit, ObjectType, Signature};
 use std::path::Path;
 use std::path::PathBuf;
+use fs_extra::{move_items, remove_items, dir};
+use std::os::unix::fs;
 
 pub trait FileOperator {
     fn mv(&self, source: &Path, target: &Path) -> Result<(), Error> {
-        unimplemented!()
+        let options = dir::CopyOptions::new();
+        let mut from_paths = Vec::new();
+        from_paths.push(source);
+        move_items(&from_paths, target, &options)?;
+        Ok(())
     }
+
+    // not support windows for now
     fn link(&self, source: &Path, target: &Path) -> Result<(), Error> {
-        unimplemented!()
+        fs::symlink(source, target)?;
+        Ok(())
     }
+
     fn rm(&self, source: &Path) -> Result<(), Error> {
-        unimplemented!()
+        let mut from_paths = Vec::new();
+        from_paths.push(source);
+        remove_items(&from_paths)?;
+        Ok(())
     }
 }
 
@@ -41,14 +54,6 @@ pub trait StorageManager: Sized {
     fn remove(&self, filepath: &Path, tags: &Vec<String>) -> Result<(), Error>;
 }
 
-pub trait Test {
-    fn test(&self) {}
-}
-
-pub struct Hehe {}
-
-impl Test for Hehe {}
-
 pub struct YamlStorageManager {
     config_file_path: Box<Path>
 }
@@ -68,7 +73,30 @@ impl StorageManager for YamlStorageManager {
 pub struct GitStore<T: StorageManager> {
     repo: Repository,
     manager: T,
-    manager2: Box<dyn Test>,
+}
+
+impl<T: StorageManager> GitStore<T> {
+    fn save(&self) -> Result<(), Error> {
+        let mut index = self.repo.index()?;
+        // TODO check the real path
+        let path = self.repo.path();
+        index.add_path(path)?;
+        let oid = index.write_tree()?;
+        let obj = self.repo.head()?.resolve()?.peel(ObjectType::Commit)?;
+        let commit = obj.into_commit().ok();
+        let tree = self.repo.find_tree(oid)?;
+        let mut parents = Vec::<Commit>::new();
+
+        if let Some(parent) = commit {
+            parents.push(parent)
+        }
+
+        let parent_commit = parents.iter().map(|c| c).collect::<Vec<&Commit>>();
+        // TODO read from config
+        let signature = Signature::now("Zbigniew Siciarz", "zbigniew@siciarz.net")?;
+        self.repo.commit(Some("HEAD"), &signature, &signature, "update dot file", &tree, &parent_commit)?;
+        Ok(())
+    }
 }
 
 impl<T: StorageManager> FileOperator for GitStore<T> {}
@@ -80,6 +108,7 @@ impl<T: StorageManager> Storage for GitStore<T> {
         target.push(filename);
         self.mv(filepath, &target)?;
         self.link(&target, filepath)?;
+        self.save()?;
         Ok(())
     }
 
