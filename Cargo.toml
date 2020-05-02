@@ -8,8 +8,10 @@ edition = "2018"
 
 [dependencies]
 clap  = "2.33.0"
-git2 = "0.10"
+git2 = "0.13"
 fs_extra = "1.1.0"
 failure = "0.1.5"
 shellexpand = "1.1.0"
 dirs = "2.0"
+whoami = "0.8"
+git2_credentials = "0.6.0"
